@@ -9,6 +9,13 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./booktheseat.db")
 
+# Supabase gives a standard postgresql:// URL, while this project uses
+# psycopg (v3). Normalize the URL so SQLAlchemy selects the installed driver.
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+elif DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 # Vercel serverless functions should use Supabase transaction pooling (port 6543)
 # with NullPool so each invocation does not retain database connections.
