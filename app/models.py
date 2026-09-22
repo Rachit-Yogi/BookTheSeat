@@ -9,8 +9,8 @@ class User(Base):
     email: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     phone_number: Mapped[str | None] = mapped_column(String(30), nullable=True, index=True)
     firebase_uid: Mapped[str] = mapped_column(String(255), unique=True, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 class Movie(Base):
     __tablename__ = "movies"
@@ -24,7 +24,7 @@ class Movie(Base):
     language: Mapped[str] = mapped_column(String(80), default="Hindi")
     poster_url: Mapped[str] = mapped_column(Text, default="")
     release_date: Mapped[date] = mapped_column(Date)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 class Theatre(Base):
     __tablename__ = "theatres"
@@ -34,7 +34,7 @@ class Theatre(Base):
     latitude: Mapped[float] = mapped_column(Numeric(10,7))
     longitude: Mapped[float] = mapped_column(Numeric(10,7))
     city: Mapped[str] = mapped_column(String(100), default="Jaipur", index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 class ShowTime(Base):
     __tablename__ = "showtimes"
@@ -45,7 +45,7 @@ class ShowTime(Base):
     time: Mapped[str] = mapped_column(String(10))
     format: Mapped[str] = mapped_column(String(20), default="2D")
     language: Mapped[str] = mapped_column(String(80), default="Hindi")
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 class Seat(Base):
     __tablename__ = "seats"
@@ -57,7 +57,7 @@ class Seat(Base):
     price: Mapped[float] = mapped_column(Numeric(8,2))
     is_booked: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     booked_by: Mapped[int | None] = mapped_column(ForeignKey("users.user_id"), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     __table_args__ = (UniqueConstraint("showtime_id", "seat_number", name="uq_showtime_seat"),)
 
 class Booking(Base):
@@ -67,9 +67,9 @@ class Booking(Base):
     showtime_id: Mapped[int] = mapped_column(ForeignKey("showtimes.showtime_id"), index=True)
     total_price: Mapped[float] = mapped_column(Numeric(8,2))
     booking_status: Mapped[str] = mapped_column(String(20), default="pending", index=True)
-    booking_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    payment_expiry: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    booking_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    payment_expiry: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 class BookingSeat(Base):
     __tablename__ = "booking_seats"
@@ -82,6 +82,6 @@ class SeatReservation(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), index=True)
     showtime_id: Mapped[int] = mapped_column(ForeignKey("showtimes.showtime_id"), index=True)
     seat_id: Mapped[int] = mapped_column(ForeignKey("seats.seat_id"), index=True)
-    reservation_expiry: Mapped[datetime] = mapped_column(DateTime, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    reservation_expiry: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     __table_args__ = (UniqueConstraint("showtime_id", "seat_id", name="uq_active_showtime_seat_reservation"),)
