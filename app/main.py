@@ -30,9 +30,12 @@ RESERVATION_MINUTES = int(os.getenv("RESERVATION_MINUTES", "5"))
 
 @app.on_event("startup")
 async def startup():
-    Base.metadata.create_all(bind=engine)
-    seed_database()
-    asyncio.create_task(expiry_loop())
+    # Vercel uses serverless functions and the Supabase schema is already provisioned.
+    # Avoid running migrations/seeding and persistent background tasks on every cold start.
+    if os.getenv("VERCEL") != "1":
+        Base.metadata.create_all(bind=engine)
+        seed_database()
+        asyncio.create_task(expiry_loop())
 
 @app.get("/")
 def home():
