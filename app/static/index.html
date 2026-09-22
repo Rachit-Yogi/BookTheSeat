@@ -9,11 +9,58 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css" />
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+
+  <!-- Firebase 12.19.0 — BookTheSeat Firebase project -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      RecaptchaVerifier,
+      signInWithPhoneNumber,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBhTW0ecTXsjf7h5baqBUKq3NusblBdvrg",
+      authDomain: "booktheseat-c364a.firebaseapp.com",
+      projectId: "booktheseat-c364a",
+      storageBucket: "booktheseat-c364a.firebasestorage.app",
+      messagingSenderId: "988372156650",
+      appId: "1:988372156650:web:60ec6a69703a54db00d793",
+      measurementId: "G-J67SXQRQ1R"
+    };
+
+    try {
+      const app = initializeApp(firebaseConfig);
+      let analytics = null;
+      try { analytics = getAnalytics(app); } catch (_) {}
+
+      const auth = getAuth(app);
+      window.bookTheSeatFirebase = {
+        app,
+        analytics,
+        auth,
+        GoogleAuthProvider,
+        signInWithPopup,
+        RecaptchaVerifier,
+        signInWithPhoneNumber,
+        onAuthStateChanged,
+        firebaseConfig
+      };
+
+      window.dispatchEvent(new CustomEvent("firebase-ready"));
+    } catch (error) {
+      console.error("Firebase initialization failed:", error);
+      window.dispatchEvent(new CustomEvent("firebase-failed", { detail: error }));
+    }
+  </script>
 </head>
 <body>
   <div id="toast-root"></div>
+
   <header class="topbar">
     <div class="brand" onclick="navigate('home')"><span class="brand-mark">B</span><span>BookTheSeat<span class="dot">.com</span></span></div>
     <nav class="desktop-nav">
@@ -40,12 +87,20 @@
       <div class="eyebrow">WELCOME BACK</div>
       <h2>Get your seat before it disappears.</h2>
       <p class="muted">Sign in with Google or phone. Firebase handles identity; BookTheSeat stores your bookings.</p>
+
       <button class="google-btn" onclick="googleLogin()"><span>G</span> Continue with Google</button>
+
       <div class="divider"><span>or</span></div>
+
       <div class="field"><label>Phone number</label><input id="phone-number" placeholder="+91 98XXXXXXXX" /></div>
       <div id="recaptcha-container"></div>
       <button class="secondary-btn wide" onclick="sendOtp()">Send OTP</button>
-      <div id="otp-row" class="hidden"><div class="field"><label>OTP</label><input id="phone-otp" placeholder="6-digit code" /></div><button class="primary-btn wide" onclick="verifyOtp()">Verify & Continue</button></div>
+
+      <div id="otp-row" class="hidden">
+        <div class="field"><label>OTP</label><input id="phone-otp" placeholder="6-digit code" /></div>
+        <button class="primary-btn wide" onclick="verifyOtp()">Verify & Continue</button>
+      </div>
+
       <button class="ghost-btn wide" onclick="demoLogin()">Use demo account</button>
       <p id="auth-error" class="error"></p>
     </div>
