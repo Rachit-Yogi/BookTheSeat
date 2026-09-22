@@ -39,3 +39,16 @@ Run `schema.sql` in the Supabase SQL Editor and set `DATABASE_URL`.
 
 ## Production notes
 For production, add HTTPS/WSS, rate limiting, Firebase App Check, audit logs, scheduled reservation cleanup, real payment gateway/webhooks, and stricter CORS configuration.
+
+
+## Firebase Google Login setup
+
+The frontend is connected to Firebase project `booktheseat-c364a` and uses the Firebase modular Web SDK 12.19.0.
+
+In Firebase Console:
+1. Open **Authentication → Sign-in method** and enable **Google**.
+2. For phone login, enable **Phone** and keep reCAPTCHA verification enabled.
+3. In **Authentication → Settings → Authorized domains**, add the production domain where BookTheSeat is hosted. For local development, add `localhost` when required.
+4. Run the app over HTTP locally or HTTPS in production.
+
+The browser signs users in with Google/Phone and sends the Firebase ID token to FastAPI. The backend validates that token through Firebase Admin when `FIREBASE_SERVICE_ACCOUNT_JSON` is provided, otherwise it uses the Firebase Identity Toolkit verification endpoint with the configured web API key. Firebase's official web documentation recommends enabling the provider in the Authentication console and using the SDK's Google provider flow. citeturn770674search0turn770674search1
