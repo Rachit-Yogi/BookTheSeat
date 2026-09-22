@@ -24,18 +24,25 @@ async function boot(){
   updateAuthButton();
 }
 async function initFirebase(){
-  const f=state.config?.firebase||{};
-  if(!f.projectId||typeof firebase==='undefined')return;
-  try{
-    if(!firebase.apps.length)firebase.initializeApp(f);
-    firebase.auth().onAuthStateChanged(async u=>{
+  const start=()=>{
+    const fb=window.bookTheSeatFirebase;
+    if(!fb?.auth)return false;
+    fb.onAuthStateChanged(fb.auth,async u=>{
       state.firebaseUser=u;
       if(u){
         try{state.user=await api('/api/auth/login',{method:'POST',body:JSON.stringify({id_token:await u.getIdToken()})})}catch(e){toast(e.message,'error')}
       }else if(!localStorage.getItem('bts_demo'))state.user=null;
       updateAuthButton();
     });
-  }catch(e){console.warn(e)}
+    return true;
+  };
+  if(start())return;
+  await new Promise(resolve=>{
+    const done=()=>{window.removeEventListener('firebase-ready',done);window.removeEventListener('firebase-failed',done);start();resolve()};
+    window.addEventListener('firebase-ready',done,{once:true});
+    window.addEventListener('firebase-failed',done,{once:true});
+    setTimeout(done,3000);
+  });
 }
 function updateAuthButton(){
   const b=$('#auth-button');if(!b)return;
@@ -45,19 +52,37 @@ function updateAuthButton(){
 function openAuth(){$('#auth-modal')?.showModal();$('#auth-error').textContent=''}
 function closeAuth(){$('#auth-modal')?.close()}
 async function googleLogin(){
-  if(typeof firebase==='undefined'){toast('Firebase is not configured. Use demo account.','error');return}
-  try{await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider());closeAuth();toast('Signed in successfully','success')}catch(e){$('#auth-error').textContent=e.message}
+  const fb=window.bookTheSeatFirebase;
+  if(!fb?.auth){toast('Firebase is not ready. Check the Firebase project configuration.','error');return}
+  try{
+    const provider=new fb.GoogleAuthProvider();
+    await fb.signInWithPopup(fb.auth,provider);
+    closeAuth();
+    toast('Signed in with Google successfully','success');
+  }catch(e){
+    $('#auth-error').textContent=e.code==='auth/popup-closed-by-user'?'Google sign-in was cancelled.':e.message;
+  }
 }
 async function sendOtp(){
   try{
+    const fb=window.bookTheSeatFirebase;
     const phone=$('#phone-number').value.trim();if(!phone)throw new Error('Enter a phone number');
-    if(!window.recaptchaVerifier)window.recaptchaVerifier=new firebase.auth.RecaptchaVerifier('recaptcha-container',{size:'invisible'});
-    state.authConfirmation=await firebase.auth().signInWithPhoneNumber(phone,window.recaptchaVerifier);
-    $('#otp-row').classList.remove('hidden');toast('OTP sent','success')
+    if(!fb?.auth)throw new Error('Firebase is not ready yet. Please try again.');
+    if(!window.recaptchaVerifier){
+      window.recaptchaVerifier=new fb.RecaptchaVerifier(fb.auth,'recaptcha-container',{size:'invisible'});
+      await window.recaptchaVerifier.render();
+    }
+    state.authConfirmation=await fb.signInWithPhoneNumber(fb.auth,phone,window.recaptchaVerifier);
+    $('#otp-row').classList.remove('hidden');
+    toast('OTP sent','success');
   }catch(e){$('#auth-error').textContent=e.message}
 }
 async function verifyOtp(){
-  try{await state.authConfirmation.confirm($('#phone-otp').value.trim());closeAuth();toast('Phone verified','success')}catch(e){$('#auth-error').textContent=e.message}
+  try{
+    await state.authConfirmation.confirm($('#phone-otp').value.trim());
+    closeAuth();
+    toast('Phone verified successfully','success');
+  }catch(e){$('#auth-error').textContent=e.message}
 }
 async function demoLogin(showToast=true){
   const token='demo:demo-user:demo@booktheseat.local';
@@ -178,7 +203,7 @@ async function renderProfile(){
   $('#app').innerHTML='<section class="page"><div class="section-head"><div><div class="eyebrow">ACCOUNT</div><h2>'+esc(me.email||me.phone_number||'BookTheSeat user')+'</h2><p>Manage your profile and booking history.</p></div><button class="ghost-btn" onclick="logout()">Sign out</button></div><div class="summary-card" style="position:static;margin-bottom:20px"><div class="summary-line"><span>Email</span><strong>'+esc(me.email||'—')+'</strong></div><div class="summary-line"><span>Phone</span><strong>'+esc(me.phone_number||'—')+'</strong></div></div><div class="section-head"><div><h2>Booking history</h2><p>'+bookings.length+' booking(s)</p></div></div><div class="history-grid">'+(bookings.length?bookings.map(b=>'<div class="history-card"><img src="'+esc(b.movie_poster)+'" alt=""><div style="flex:1"><h3 style="margin:0 0 6px">'+esc(b.movie)+'</h3><p class="muted" style="margin:0">'+esc(b.theatre)+' · '+b.date+' · '+b.time+'<br>Seats: '+b.seats.join(', ')+' · '+fmtINR(b.total_price)+'</p></div><span class="pill '+(b.status==='confirmed'?'active':'')+'">'+b.status+'</span></div>').join(''):'<div class="empty">No bookings yet.</div>')+'</div></section>'
 }
 async function logout(){
-  try{if(typeof firebase!=='undefined'&&firebase.apps.length)await firebase.auth().signOut()}catch(e){}
+  try{if(window.bookTheSeatFirebase?.auth)await window.bookTheSeatFirebase.auth.signOut()}catch(e){}
   state.firebaseUser=null;state.user=null;localStorage.removeItem('bts_demo');updateAuthButton();navigate('home');toast('Signed out','info')
 }
 boot();
