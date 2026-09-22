@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#090b16" />
+  <title>BookTheSeat.com — Movie Tickets</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <div id="toast-root"></div>
+  <header class="topbar">
+    <div class="brand" onclick="navigate('home')"><span class="brand-mark">B</span><span>BookTheSeat<span class="dot">.com</span></span></div>
+    <nav class="desktop-nav">
+      <button class="nav-link" onclick="navigate('home')">Home</button>
+      <button class="nav-link" onclick="navigate('movies')">Movies</button>
+      <button class="nav-link" onclick="navigate('theatres')">Theatres</button>
+    </nav>
+    <div class="top-actions">
+      <button id="location-pill" class="location-pill" title="Use your location">📍 Jaipur</button>
+      <button id="auth-button" class="primary-btn compact" onclick="openAuth()">Login</button>
+    </div>
+  </header>
+
+  <main id="app"></main>
+
+  <footer class="footer">
+    <div><strong>BookTheSeat.com</strong><br><span>Seat reservation demo with real-time locking.</span></div>
+    <div class="footer-links"><a href="#home">Home</a><a href="#movies">Movies</a><a href="#theatres">Theatres</a></div>
+  </footer>
+
+  <dialog id="auth-modal" class="modal">
+    <div class="modal-card">
+      <button class="close" onclick="closeAuth()">×</button>
+      <div class="eyebrow">WELCOME BACK</div>
+      <h2>Get your seat before it disappears.</h2>
+      <p class="muted">Sign in with Google or phone. Firebase handles identity; BookTheSeat stores your bookings.</p>
+      <button class="google-btn" onclick="googleLogin()"><span>G</span> Continue with Google</button>
+      <div class="divider"><span>or</span></div>
+      <div class="field"><label>Phone number</label><input id="phone-number" placeholder="+91 98XXXXXXXX" /></div>
+      <div id="recaptcha-container"></div>
+      <button class="secondary-btn wide" onclick="sendOtp()">Send OTP</button>
+      <div id="otp-row" class="hidden"><div class="field"><label>OTP</label><input id="phone-otp" placeholder="6-digit code" /></div><button class="primary-btn wide" onclick="verifyOtp()">Verify & Continue</button></div>
+      <button class="ghost-btn wide" onclick="demoLogin()">Use demo account</button>
+      <p id="auth-error" class="error"></p>
+    </div>
+  </dialog>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
