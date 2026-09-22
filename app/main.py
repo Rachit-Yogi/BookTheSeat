@@ -4,7 +4,7 @@ import io
 import math
 import os
 import secrets
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 import qrcode
@@ -63,7 +63,7 @@ def distance_km(lat1, lon1, lat2, lon2):
     return R*2*math.atan2(math.sqrt(a), math.sqrt(1-a))
 
 def cleanup_expired(session: Session, showtime_id: int | None = None):
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     q = session.query(SeatReservation).filter(SeatReservation.reservation_expiry <= now)
     if showtime_id is not None:
         q = q.filter(SeatReservation.showtime_id == showtime_id)
@@ -197,7 +197,7 @@ def seats(showtime_id:int):
 
 @app.post("/api/reserve-seats")
 async def reserve_seats(payload: ReserveSeatsRequest, user: User = Depends(get_current_user)):
-    expires=datetime.utcnow()+timedelta(minutes=RESERVATION_MINUTES)
+    expires=datetime.now(timezone.utc)+timedelta(minutes=RESERVATION_MINUTES)
     with db_session() as session:
         st=session.get(ShowTime,payload.showtime_id)
         if not st: raise HTTPException(404,"Showtime not found")
@@ -237,7 +237,7 @@ async def cancel_reservation(payload: CancelReservationRequest, user: User = Dep
 @app.post("/api/book-tickets")
 async def book_tickets(payload: BookTicketsRequest, user: User = Depends(get_current_user)):
     with db_session() as session:
-        now=datetime.utcnow()
+        now=datetime.now(timezone.utc)
         reservations=(session.query(SeatReservation).filter(SeatReservation.reservation_id.in_(payload.reservation_ids),SeatReservation.user_id==user.user_id).with_for_update().all())
         if len(reservations)!=len(payload.reservation_ids): raise HTTPException(400,"Reservation is missing or belongs to another user")
         if any(r.reservation_expiry<=now for r in reservations): raise HTTPException(410,"Reservation expired")
